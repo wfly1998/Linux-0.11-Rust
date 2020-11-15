@@ -1,9 +1,9 @@
+.PHONY: all image kernel clean qemu
 HDA_IMG = hdc-0.11.img
 
 include Makefile.header
 
 LDFLAGS	+= -Ttext 0 -e startup_32
-# ARCHIVES=kernel/kernel.o mm/mm.o fs/fs.o
 
 all:	image
 
@@ -16,14 +16,29 @@ boot/bootsect: boot/bootsect.s
 	@make bootsect -C boot
 
 boot/setup: boot/setup.s
-	@make setup -C boot
+	@make setup -C boot/
 
-tools/system:	# boot/head.o init/main.o \
-		# $(ARCHIVES) $(DRIVERS) $(MATH) $(LIBS)
-	@$(LD) $(LDFLAGS) boot/head.o init/main.o \
-	# $(ARCHIVES) \
-	# $(DRIVERS) \
-	# $(MATH) \
-	# $(LIBS) \
-	-o tools/system
+image:
+	@cp -f tools/system system.tmp
+	@$(STRIP) system.tmp
+	@$(OBJCOPY) -O binary -R .note -R .comment system.tmp tools/kernel
+	@tools/build.sh boot/bootsect boot/setup tools/kernel image $(ROOT_DEV)
+	@rm system.tmp
+	@rm -f tools/kernel
+	@sync
+
+kernel:
+	@cd init && cargo xbuild
+
+tools/system: kernel
+	@cp init/target/x86/debug/init tools/system
 	@nm tools/system | grep -v '\(compiled\)\|\(\.o$$\)\|\( [aU] \)\|\(\.\.ng$$\)\|\(LASH[RL]DI\)'| sort > System.map
+
+clean:
+	@make clean -C boot/
+	@rm -rf image System.map tools/system
+	@cd init && cargo clean
+
+qemu: image
+	qemu-system-x86_64 -m 16 -boot a -fda image -hda hdc-0.11.img
+
