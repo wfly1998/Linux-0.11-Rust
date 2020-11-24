@@ -1,0 +1,7 @@
+set architecture auto
+target remote :1234
+break *0x0000
+define hook-stop
+x/i $pc
+end
+continue

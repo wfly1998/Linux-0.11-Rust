@@ -1,4 +1,7 @@
-include ../Makefile.header
+AS	= as --32
+LD	= ld
+LDFLAGS = -m elf_i386
+OBJCOPY = objcopy
 
 LDFLAGS	+= -Ttext 0
 

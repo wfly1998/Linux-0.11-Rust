@@ -1,7 +1,16 @@
-.PHONY: all image kernel clean qemu
+.PHONY: all kernel clean qemu
 HDA_IMG = hdc-0.11.img
 
-include Makefile.header
+AS	= as --32
+LD	= ld
+LDFLAGS = -m elf_i386
+CC	= gcc
+CFLAGS  = -g -m32 -fno-builtin -fno-stack-protector -fomit-frame-pointer -fstrength-reduce
+
+CPP	= cpp -nostdinc
+AR	= ar
+STRIP = strip
+OBJCOPY = objcopy
 
 LDFLAGS	+= -Ttext 0 -e startup_32
 
@@ -28,10 +37,10 @@ image:
 	@sync
 
 kernel:
-	@cd init && cargo xbuild
+	@cd init && cargo xbuild --release
 
 tools/system: kernel
-	@cp init/target/x86/debug/init tools/system
+	@cp init/target/x86/release/init tools/system
 	@nm tools/system | grep -v '\(compiled\)\|\(\.o$$\)\|\( [aU] \)\|\(\.\.ng$$\)\|\(LASH[RL]DI\)'| sort > System.map
 
 clean:
@@ -42,3 +51,7 @@ clean:
 qemu: image
 	qemu-system-x86_64 -m 16 -boot a -fda image -hda hdc-0.11.img
 
+debug: image
+	qemu-system-x86_64 -m 16 -boot a -fda image -hda hdc-0.11.img -s -S&
+	sleep 1
+	terminal -e "gdb -q -tui -x tools/gdbinit"

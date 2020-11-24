@@ -21,7 +21,8 @@ startup_32:
 	mov %ax,%es
 	mov %ax,%fs
 	mov %ax,%gs
-	lss stack_start,%esp
+	jmp startup_32	# for debug
+	lss stack_start,%esp	# TODO: FIXME
 	call setup_idt
 	call setup_gdt
 	movl $0x10,%eax		# reload all the segment registers

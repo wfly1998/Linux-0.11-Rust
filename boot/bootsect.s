@@ -255,7 +255,7 @@ sectors:
 
 msg1:
 	.byte 13,10
-	.ascii "IceCityOS is booting ..."
+	.ascii "Loading system ..."
 	.byte 13,10,13,10
 
 	.org 508

@@ -1,48 +1,56 @@
-ENTRY(_start)
+/* 执行入口 */
+ENTRY(startup_32)
 
-KERNEL_BEGIN = 0x10000;
+/* 数据存放起始地址 */
+BASE_ADDRESS = 0x0000;
 
-SECTIONS {
+SECTIONS
+{   
+    /* . 表示当前地址（location counter） */
+    . = BASE_ADDRESS;
 
-  . = KERNEL_BEGIN;
+    /* start 符号表示全部的开始位置 */
+    kernel_start = .;
 
-  .rodata ALIGN(4K):
-  {
-    *(.rodata .rodata.*)
-  }
+    . = ALIGN(4K);
+    text_start = .;
 
-  .text ALIGN(4K):
-  {
-    stext = .;
-    _copy_user_start = .;
-    *(.text.copy_user)
-    _copy_user_end = .;
-    *(.text .text.*)
-    etext = .;
-  }
+    /* .text 字段 */
+    .text : {
+        /* 把 entry 函数放在最前面 */
+        *(.text.entry)
+        /* 要链接的文件的 .text 字段集中放在这里 */
+        *(.text .text.*)
+    }
 
-  .data ALIGN(4K):
-  {
-    PROVIDE_HIDDEN(kcounter_descriptor_begin = .);
-    KEEP(*(.kcounter.descriptor))
-    PROVIDE_HIDDEN(kcounter_descriptor_end = .);
+    . = ALIGN(4K);
+    rodata_start = .;
 
-    *(.data .data.*)
-  }
+    /* .rodata 字段 */
+    .rodata : {
+        /* 要链接的文件的 .rodata 字段集中放在这里 */
+        *(.rodata .rodata.*)
+    }
 
-  .got ALIGN(4K):
-  {
-    *(.got .got.*)
-  }
+    . = ALIGN(4K);
+    data_start = .;
 
-  .bss ALIGN(4K):
-  {
-	. = ALIGN(4096);
-	PROVIDE_HIDDEN(kcounters_arena_start = .);
-	KEEP(*(.kcounter.items))
-	PROVIDE_HIDDEN(kcounters_arena_end = .);
-	. = ALIGN(4096);
+    /* .data 字段 */
+    .data : {
+        /* 要链接的文件的 .data 字段集中放在这里 */
+        *(.data .data.*)
+    }
 
-    *(.bss .bss.*)
-  }
+    . = ALIGN(4K);
+    bss_start = .;
+
+    /* .bss 字段 */
+    .bss : {
+        /* 要链接的文件的 .bss 字段集中放在这里 */
+        *(.sbss .bss .bss.*)
+    }
+
+    /* 结束地址 */
+    . = ALIGN(4K);
+    kernel_end = .;
 }
