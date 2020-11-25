@@ -7,11 +7,16 @@
   "target-c-int-width": "32",
   "os": "none",
   "executables": true,
-  "linker-flavor": "ld.lld",
-  "linker": "rust-lld",
+  "linker": "ld",
+  "linker-flavor": "ld",
   "pre-link-args": {
-    "ld.lld": [
-      "-Tx86.ld"
+    "ld": [
+	  "-m",
+	  "elf_i386",
+      "-Ttext",
+	  "0",
+	  "-e",
+	  "startup_32"
     ]
   },
   "panic-strategy": "abort",

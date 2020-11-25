@@ -21,8 +21,7 @@ startup_32:
 	mov %ax,%es
 	mov %ax,%fs
 	mov %ax,%gs
-	# jmp startup_32	# for debug
-	lss stack_start,%esp	# TODO: FIXME
+	lss STACK_START,%esp
 	call setup_idt
 	call setup_gdt
 	movl $0x10,%eax		# reload all the segment registers
@@ -30,7 +29,7 @@ startup_32:
 	mov %ax,%es		# reloaded in 'setup_gdt'
 	mov %ax,%fs
 	mov %ax,%gs
-	lss stack_start,%esp
+	# lss STACK_START,%esp	# TODO: FIXME
 	xorl %eax,%eax
 1:	incl %eax		# check that A20 really IS enabled
 	movl %eax,0x000000	# loop forever if it isn't

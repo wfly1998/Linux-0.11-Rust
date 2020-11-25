@@ -18,5 +18,6 @@ make qemu
 
 ## TODO List
 
-- [x] run `bootsect.s` and `setup.s`
-- [ ] run `main.rs` with `head.s`
+- [x] Run `bootsect.s` and `setup.s`
+- [x] Run `main.rs` with `head.s`
+- [ ] Add `trap_init` function

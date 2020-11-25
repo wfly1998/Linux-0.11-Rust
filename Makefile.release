@@ -37,10 +37,10 @@ image:
 	sync
 
 kernel:
-	cd init && cargo xbuild
+	cd init && cargo xbuild --release
 
 tools/system: kernel
-	cp init/target/x86/debug/init tools/system
+	cp init/target/x86/release/init tools/system
 	nm tools/system | grep -v '\(compiled\)\|\(\.o$$\)\|\( [aU] \)\|\(\.\.ng$$\)\|\(LASH[RL]DI\)'| sort > System.map
 
 clean:
