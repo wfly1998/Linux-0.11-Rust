@@ -1,18 +1,10 @@
 [package]
-name = "init"
+name = "kernel"
 version = "0.1.0"
-authors = ["leeyu"]
+authors = ["Yukiteru Lee <wfly1998@sina.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 include = { path = "../include" }
-kernel = { path = "../kernel"}
-
-[profile.dev]
-panic = "abort"
-
-[profile.release]
-panic = "abort"
-

@@ -1,4 +1,7 @@
-.PHONY: all kernel clean qemu
+.PHONY: all clean qemu
+
+mode ?= debug
+
 HDA_IMG = hdc-0.11.img
 
 AS	= as --32
@@ -13,6 +16,12 @@ STRIP = strip
 OBJCOPY = objcopy
 
 LDFLAGS	+= -Ttext 0 -e startup_32
+
+build_args := --target x86.json
+
+ifeq ($(mode), release)
+	build_args += --release
+endif
 
 all:	image
 
@@ -36,17 +45,17 @@ image:
 	rm -f tools/kernel
 	sync
 
-kernel:
-	cd init && cargo xbuild
-
-tools/system: kernel
-	cp init/target/x86/debug/init tools/system
+tools/system:
+	cd init && cargo xbuild $(build_args)
+	cp init/target/x86/$(mode)/init tools/system
 	nm tools/system | grep -v '\(compiled\)\|\(\.o$$\)\|\( [aU] \)\|\(\.\.ng$$\)\|\(LASH[RL]DI\)'| sort > System.map
 
 clean:
 	make clean -C boot/
 	rm -rf image System.map tools/system
+	cd include && cargo clean
 	cd init && cargo clean
+	cd kernel && cargo clean
 
 qemu: image
 	qemu-system-i386 -m 16 -boot a -fda image -hda hdc-0.11.img
@@ -55,3 +64,4 @@ debug: image
 	qemu-system-i386 -m 16 -boot a -fda image -hda hdc-0.11.img -s -S&
 	sleep 1
 	terminal -e "gdb -q -tui -x tools/gdbinit"
+
