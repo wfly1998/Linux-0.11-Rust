@@ -20,4 +20,5 @@ make qemu
 
 - [x] Run `bootsect.s` and `setup.s`
 - [x] Run `main.rs` with `head.s`
+- [ ] Add `printk` function
 - [ ] Add `trap_init` function
