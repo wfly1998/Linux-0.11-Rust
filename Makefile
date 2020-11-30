@@ -65,3 +65,6 @@ debug: image
 	sleep 1
 	terminal -e "gdb -q -tui -x tools/gdbinit"
 
+count:
+	find . -name '*.rs' | xargs wc -l
+
