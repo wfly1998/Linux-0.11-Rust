@@ -14,7 +14,7 @@ macro_rules! DEC { ($($a: tt)+) => { $($a)+ = ($($a)+ - 1) & (TTY_BUF_SIZE - 1);
 #[inline]
 pub fn EMPTY(a: &tty_queue) -> bool { a.head == a.tail }
 #[inline]
-pub fn LEFT(a: &tty_queue) -> usize { (a.tail-a.head-1) & (TTY_BUF_SIZE-1) }
+pub fn LEFT(a: &tty_queue) -> usize { unsafe { (a.tail.unchecked_sub(a.head).unchecked_sub(1)) & (TTY_BUF_SIZE-1) } }
 #[inline]
 pub fn LAST(a: &tty_queue) -> u8 { a.buf[(TTY_BUF_SIZE-1) & (a.head-1)] }
 #[inline]

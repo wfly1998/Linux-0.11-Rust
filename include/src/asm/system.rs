@@ -3,6 +3,10 @@
 use crate::head::*;
 
 #[inline]
+pub unsafe fn hlt() {
+    llvm_asm!("hlt");
+}
+#[inline]
 pub fn move_to_user_mode() {
     unsafe {
         llvm_asm!(r#"movl %esp,%eax

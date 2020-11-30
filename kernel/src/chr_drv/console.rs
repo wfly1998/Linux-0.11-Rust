@@ -41,7 +41,6 @@ static mut state: usize = 0;
 static mut npar: usize = 0;
 static mut par: [usize; NPAR] = [0; NPAR];
 static mut ques: bool = false;
-#[no_mangle]
 static mut attr: u8 = 0x07;
 
 /*
@@ -409,10 +408,8 @@ pub fn con_write(tty: &mut tty_struct) {
                         pos -= video_size_row;
                         lf();
                     }
-                    llvm_asm!(r#"movb attr,%ah
-                                 movw %ax,$1"#
-                                 ::"{ah}" (c),"m" (*(pos as *const u16))
-                             );
+                    // *(pos as *mut u16) = (attr as u16) << 8 | (c as u16);
+                    *(pos as *mut u16) = 0x07 << 8 | (c as u16);
                     pos += 2;
                     x += 1;
                 } else if (c==27) {
