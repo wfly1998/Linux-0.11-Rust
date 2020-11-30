@@ -4,6 +4,9 @@
 
 use core::panic::PanicInfo;
 
+use kernel::chr_drv::console::con_init;
+use kernel::chr_drv::tty_io::tty_write;
+
 global_asm!(include_str!("head.s"));
 
 const PAGE_SIZE: usize = 4096;
@@ -27,6 +30,8 @@ fn panic(_info: &PanicInfo) -> ! {
 
 #[no_mangle]
 pub extern "C" fn main() -> ! {
+    con_init();
+    tty_write(0, &['H' as u8, 'e' as u8, 'l' as u8, 'l' as u8, 'o' as u8], 5);
     loop {}
 }
 

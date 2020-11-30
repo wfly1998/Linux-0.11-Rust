@@ -31,30 +31,30 @@ pub const TIOCSSOFTCAR: usize = 0x541A;
 pub const TIOCINQ:      usize = 0x541B;
 
 pub struct winsize {
-	ws_row: u16,
-	ws_col: u16,
-	ws_xpixel: u16,
-	ws_ypixel: u16,
+	pub ws_row: u16,
+	pub ws_col: u16,
+	pub ws_xpixel: u16,
+	pub ws_ypixel: u16,
 }
 
 pub const NCC: usize = 8;
 pub struct termio {
-	c_iflag: usize,           /* input mode flags */
-	c_oflag: usize,		/* output mode flags */
-	c_cflag: usize,           /* control mode flags */
-	c_lflag: usize,           /* local mode flags */
-	c_line: u8,             /* line discipline */
-	c_cc: [u8; NCC],        /* control characters */
+	pub c_iflag: usize,           /* input mode flags */
+	pub c_oflag: usize,		/* output mode flags */
+	pub c_cflag: usize,           /* control mode flags */
+	pub c_lflag: usize,           /* local mode flags */
+	pub c_line: u8,             /* line discipline */
+	pub c_cc: [u8; NCC],        /* control characters */
 }
 
 pub const NCCS: usize = 17;
 pub struct termios {
-	c_iflag: usize,           /* input mode flags */
-	c_oflag: usize,           /* output mode flags */
-	c_cflag: usize,           /* control mode flags */
-	c_lflag: usize,           /* local mode flags */
-	c_line: u8,             /* line discipline */
-	c_cc: [u8; NCCS],       /* control characters */
+	pub c_iflag: usize,           /* input mode flags */
+	pub c_oflag: usize,           /* output mode flags */
+	pub c_cflag: usize,           /* control mode flags */
+	pub c_lflag: usize,           /* local mode flags */
+	pub c_line: u8,             /* line discipline */
+	pub c_cc: [u8; NCCS],       /* control characters */
 }
 
 /* c_cc characters */

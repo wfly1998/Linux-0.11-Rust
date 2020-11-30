@@ -1,6 +1,7 @@
 file tools/system
 set architecture auto
 target remote :1234
+break main
 define hook-stop
 x/i $pc
 end

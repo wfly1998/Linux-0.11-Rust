@@ -1,2 +1,3 @@
-mod tty_io;
+pub mod console;
+pub mod tty_io;
 

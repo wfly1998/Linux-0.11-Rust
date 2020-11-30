@@ -3,6 +3,7 @@
 use include::linux::tty::*;
 use include::signal::*;
 use include::termios::*;
+use crate::chr_drv::console::*;
 
 const ALRMMASK: u32 = (1 << SIGALRM) - 1;
 const KILLMASK: u32 = (1 << SIGKILL) - 1;
@@ -33,7 +34,7 @@ macro_rules! O_CRNL { ($($tty: tt)+) => { _O_FLAG!(($($tty)+), OCRNL) } }
 macro_rules! O_NLRET { ($($tty: tt)+) => { _O_FLAG!(($($tty)+), ONLRET) } }
 macro_rules! O_LCUC { ($($tty: tt)+) => { _O_FLAG!(($($tty)+), OLCUC) } }
 
-static tty_table: [tty_struct; 1] = [
+static mut tty_table: [tty_struct; 1] = [
     tty_struct {
         termios: termios {
             c_iflag: ICRNL,
@@ -67,7 +68,94 @@ static tty_table: [tty_struct; 1] = [
     }
 ];
 
-fn tty_write(channel: usize, buf: &[u8], nr: i32) -> i32 {
+fn tty_init() {
+    // rs_init();
+    con_init();
+}
+
+fn tty_intr(tty: &tty_struct, mask: usize) {
+    /*
+    if (tty.pgrp <= 0) {
+        return;
+    }
+    for i in 0..NR_TASKS {
+        if (tasks[i] != 0 && task[i].pgrp == tty.pgrp) {
+            task[i].signal |= mask;
+        }
+    }
+    */
+}
+
+fn sleep_if_empty(queue: &tty_queue) {
+    /*
+    cli();
+    while (!current->signal && EMPTY(*queue))
+        interruptible_sleep_on(&queue->proc_list);
+    sti();
+    */
+}
+
+fn sleep_if_full(queue: &tty_queue) {
+    /*
+	if (!FULL(*queue))
+		return;
+	cli();
+	while (!current->signal && LEFT(*queue)<128)
+		interruptible_sleep_on(&queue->proc_list);
+	sti();
+    */
+}
+
+
+pub fn tty_write(channel: usize, buf: &[u8], nr: i32) -> i32 {
     static mut cr_flag: i32 = 0;
+    let c: char;
+    let b: &[u8] = buf;
+    if (channel>2 || nr<0) {
+        return -1;
+    }
+    unsafe {
+        // let mut tty: &tty_struct = &mut tty_table[channel];
+        for c in buf.iter() {
+            PUTCH(*c, &mut tty_table[channel].write_q);
+        }
+        (tty_table[channel].write)(&mut tty_table[channel]);
+    }
+    /*
+    	static int cr_flag=0;
+	struct tty_struct * tty;
+	char c, *b=buf;
+
+	if (channel>2 || nr<0) return -1;
+	tty = channel + tty_table;
+	while (nr>0) {
+		sleep_if_full(&tty->write_q);
+		if (current->signal)
+			break;
+		while (nr>0 && !FULL(tty->write_q)) {
+			c=get_fs_byte(b);
+			if (O_POST(tty)) {
+				if (c=='\r' && O_CRNL(tty))
+					c='\n';
+				else if (c=='\n' && O_NLRET(tty))
+					c='\r';
+				if (c=='\n' && !cr_flag && O_NLCR(tty)) {
+					cr_flag = 1;
+					PUTCH(13,tty->write_q);
+					continue;
+				}
+				if (O_LCUC(tty))
+					c=toupper(c);
+			}
+			b++; nr--;
+			cr_flag = 0;
+			PUTCH(c,tty->write_q);
+		}
+		tty->write(tty);
+		if (nr>0)
+			schedule();
+	}
+	return (b-buf);
+    */
     0
 }

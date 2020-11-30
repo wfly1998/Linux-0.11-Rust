@@ -1,42 +1,56 @@
-#![allow(unused_macros)]
 use crate::termios::*;
 
 pub struct tty_queue {
-    data: usize,
-    head: usize,
-    tail: usize,
+    pub data: usize,
+    pub head: usize,
+    pub tail: usize,
     // TODO: add proc_list in sched.rs
-    // proc_list: [task_struct],
-    buf: [u8; TTY_BUF_SIZE],
+    // pub proc_list: [task_struct],
+    pub buf: [u8; TTY_BUF_SIZE],
 }
 
 macro_rules! INC { ($($a: tt)+) => { $($a)+ = ($($a)+ + 1) & (TTY_BUF_SIZE - 1); } }
 macro_rules! DEC { ($($a: tt)+) => { $($a)+ = ($($a)+ - 1) & (TTY_BUF_SIZE - 1); } }
-macro_rules! EMPTY { ($($a: tt)+) => { $($a)+.head  == $($a)+.tail } }
-macro_rules! LEFT { ($($a: tt)+) => { (a.tail-a.head-1) & (TTY_BUF_SIZE-1) } }
-macro_rules! LAST { ($($a: tt)+) => { a.buf[(TTY_BUF_SIZE-1) & (a.head-1)] } }
-macro_rules! FULL { ($($a: tt)+) => { LEFT!(a) == 0 } }
-macro_rules! CHARS { ($($a: tt)+) => { (a.head-a.tail) & (TTY_BUF_SIZE-1) } }
-macro_rules! GETCH { ($($queue: tt)+, $($c: tt)+) => { $($c)+ = $($queue)+.buf[$($queue)+.tail]; INC!($($queue)+.tail); } }
-macro_rules! PUTCH { ($($queue: tt)+, $($c: tt)+) => { $($queue)+.buf[$($queue)+.head] = $($c)+; INC!($($queue)+.head); } }
-macro_rules! INTR_CHAR { ($($tty: tt)+) => { $($tty)+.termios.c_cc[VINTR] } }
-macro_rules! QUIT_CHAR { ($($tty: tt)+) => { $($tty)+.termios.c_cc[VQUIT] } }
-macro_rules! ERASE_CHAR { ($($tty: tt)+) => { $($tty)+.termios.c_cc[VERASE] } }
-macro_rules! KILL_CHAR { ($($tty: tt)+) => { $($tty)+.termios.c_cc[VKILL] } }
-macro_rules! EOF_CHAR { ($($tty: tt)+) => { $($tty)+.termios.c_cc[VEOF] } }
-macro_rules! START_CHAR { ($($tty: tt)+) => { $($tty)+.termios.c_cc[VSTART] } }
-macro_rules! STOP_CHAR { ($($tty: tt)+) => { $($tty)+.termios.c_cc[VSTOP] } }
-macro_rules! SUSPEND_CHAR { ($($tty: tt)+) => { $($tty)+.termios.c_cc[VSUSP] } }
+#[inline]
+pub fn EMPTY(a: &tty_queue) -> bool { a.head == a.tail }
+#[inline]
+pub fn LEFT(a: &tty_queue) -> usize { (a.tail-a.head-1) & (TTY_BUF_SIZE-1) }
+#[inline]
+pub fn LAST(a: &tty_queue) -> u8 { a.buf[(TTY_BUF_SIZE-1) & (a.head-1)] }
+#[inline]
+pub fn FULL(a: &tty_queue) -> bool { LEFT(a) == 0 }
+#[inline]
+pub fn CHARS(a: &tty_queue) -> usize { (a.head-a.tail) & (TTY_BUF_SIZE-1) }
+#[inline]
+pub fn GETCH(queue: &mut tty_queue) -> u8 { let c = queue.buf[queue.tail]; INC!(queue.tail); c }
+#[inline]
+pub fn PUTCH(c: u8, queue: &mut tty_queue) { queue.buf[queue.head] = c; INC!(queue.head); }
+#[inline]
+pub fn INTR_CHAR(tty: &tty_struct) -> u8 { tty.termios.c_cc[VINTR as usize] }
+#[inline]
+pub fn QUIT_CHAR(tty: &tty_struct) -> u8 { tty.termios.c_cc[VQUIT as usize] }
+#[inline]
+pub fn ERASE_CHAR(tty: &tty_struct) -> u8 { tty.termios.c_cc[VERASE as usize] }
+#[inline]
+pub fn KILL_CHAR(tty: &tty_struct) -> u8 { tty.termios.c_cc[VKILL as usize] }
+#[inline]
+pub fn EOF_CHAR(tty: &tty_struct) -> u8 { tty.termios.c_cc[VEOF as usize] }
+#[inline]
+pub fn START_CHAR(tty: &tty_struct) -> u8 { tty.termios.c_cc[VSTART as usize] }
+#[inline]
+pub fn STOP_CHART_CHAR(tty: &tty_struct) -> u8 { tty.termios.c_cc[VSTOP as usize] }
+#[inline]
+pub fn SUSPEND_CHART_CHAR(tty: &tty_struct) -> u8 { tty.termios.c_cc[VSUSP as usize] }
 
 #[repr(C)]
 pub struct tty_struct {
-    termios: termios,
-    pgrp: isize,
-    stopped: isize,
-    write: fn(&tty_struct),
-    read_q: tty_queue,
-    write_q: tty_queue,
-    secondary: tty_queue,
+    pub termios: termios,
+    pub pgrp: isize,
+    pub stopped: isize,
+    pub write: fn(&mut tty_struct),
+    pub read_q: tty_queue,
+    pub write_q: tty_queue,
+    pub secondary: tty_queue,
 }
 
 // extern "C" {
