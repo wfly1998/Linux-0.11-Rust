@@ -161,7 +161,7 @@ ignore_int:
 	mov %ax,%es
 	mov %ax,%fs
 	pushl $int_msg
-	call printk
+	call print
 	popl %eax
 	pop %fs
 	pop %es

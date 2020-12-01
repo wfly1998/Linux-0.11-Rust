@@ -6,6 +6,7 @@ use include::linux::tty::*;
 use include::signal::*;
 use include::termios::*;
 use crate::chr_drv::console::*;
+use crate::chr_drv::serial::*;
 
 const ALRMMASK: u32 = (1 << SIGALRM) - 1;
 const KILLMASK: u32 = (1 << SIGKILL) - 1;
@@ -36,27 +37,58 @@ const TSTPMASK: u32 = (1 << SIGTSTP) - 1;
 #[inline] fn O_NLRET(tty: &tty_struct) -> usize { _O_FLAG(tty, ONLRET) }
 #[inline] fn O_LCUC(tty: &tty_struct) -> usize { _O_FLAG(tty, OLCUC) }
 
-static mut tty_table: [tty_struct; 1] = [
+pub static mut tty_table: [tty_struct; 3] = [
     tty_struct {
         termios: termios {
-            c_iflag: ICRNL,
-            c_oflag: OPOST | ONLCR,
+            c_iflag: ICRNL,         /* change incoming CR to NL */
+            c_oflag: OPOST | ONLCR, /* change outgoing NL to CRNL */
             c_cflag: 0,
             c_lflag: ISIG | ICANON | ECHO | ECHOCTL | ECHOKE,
-            c_line: 0,
+            c_line: 0,              /* console termio */
             c_cc: INIT_C_CC,
         },
-        pgrp: 0,
-        stopped: 0,
+        pgrp: 0,                    /* initial pgrp */
+        stopped: 0,                 /* initial stopped */
         write: con_write,
-        read_q: tty_queue {
+        read_q: tty_queue {         /* console read-queue */
             data: 0,
             head: 0,
             tail: 0,
             buf: [0; TTY_BUF_SIZE],
         },
-        write_q: tty_queue {
+        write_q: tty_queue {        /* console write-queue */
             data: 0,
+            head: 0,
+            tail: 0,
+            buf: [0; TTY_BUF_SIZE],
+        },
+        secondary: tty_queue {      /* console secondary queue */
+            data: 0,
+            head: 0,
+            tail: 0,
+            buf: [0; TTY_BUF_SIZE],
+        }
+    },
+    tty_struct {
+        termios: termios {
+            c_iflag: 0,             /* no translation */
+            c_oflag: 0,             /* no translation */
+            c_cflag: B2400 | CS8,
+            c_lflag: 0,
+            c_line: 0,
+            c_cc: INIT_C_CC,
+        },
+        pgrp: 0,
+        stopped: 0,
+        write: rs_write,
+        read_q: tty_queue {         /* rs 1 */
+            data: 0x3f8,
+            head: 0,
+            tail: 0,
+            buf: [0; TTY_BUF_SIZE],
+        },
+        write_q: tty_queue {
+            data: 0x3f8,
             head: 0,
             tail: 0,
             buf: [0; TTY_BUF_SIZE],
@@ -67,11 +99,42 @@ static mut tty_table: [tty_struct; 1] = [
             tail: 0,
             buf: [0; TTY_BUF_SIZE],
         }
-    }
+    },
+    tty_struct {
+        termios: termios {
+            c_iflag: 0,             /* no translation */
+            c_oflag: 0,             /* no translation */
+            c_cflag: B2400 | CS8,
+            c_lflag: 0,
+            c_line: 0,
+            c_cc: INIT_C_CC,
+        },
+        pgrp: 0,
+        stopped: 0,
+        write: rs_write,
+        read_q: tty_queue {         /* rs 2 */
+            data: 0x2f8,
+            head: 0,
+            tail: 0,
+            buf: [0; TTY_BUF_SIZE],
+        },
+        write_q: tty_queue {
+            data: 0x2f8,
+            head: 0,
+            tail: 0,
+            buf: [0; TTY_BUF_SIZE],
+        },
+        secondary: tty_queue {
+            data: 0,
+            head: 0,
+            tail: 0,
+            buf: [0; TTY_BUF_SIZE],
+        }
+    },
 ];
 
 pub fn tty_init() {
-    // rs_init();
+    rs_init();
     con_init();
 }
 
@@ -120,12 +183,12 @@ fn sleep_if_full(queue: &tty_queue) {
 }
 
 
-pub fn tty_write(channel: usize, buf: &[u8], mut nr: i32) -> i32 {
+pub fn tty_write(channel: usize, buf: &[u8], mut nr: usize) -> isize {
     let mut cr_flag: bool = false;
     let mut c: u8;
     let b: &[u8] = buf;
-    let mut b_idx = 0;
-    if (channel>2 || nr<0) {
+    let mut b_idx: usize = 0;
+    if (channel>2) {
         return -1;
     }
     let mut tty: &mut tty_struct = unsafe { &mut tty_table[channel] };
@@ -157,41 +220,5 @@ pub fn tty_write(channel: usize, buf: &[u8], mut nr: i32) -> i32 {
             // schedule();
         }
     }
-    /*
-    	static int cr_flag=0;
-	struct tty_struct * tty;
-	char c, *b=buf;
-
-	if (channel>2 || nr<0) return -1;
-	tty = channel + tty_table;
-	while (nr>0) {
-		sleep_if_full(&tty->write_q);
-		if (current->signal)
-			break;
-		while (nr>0 && !FULL(tty->write_q)) {
-			c=get_fs_byte(b);
-			if (O_POST(tty)) {
-				if (c=='\r' && O_CRNL(tty))
-					c='\n';
-				else if (c=='\n' && O_NLRET(tty))
-					c='\r';
-				if (c=='\n' && !cr_flag && O_NLCR(tty)) {
-					cr_flag = 1;
-					PUTCH(13,tty->write_q);
-					continue;
-				}
-				if (O_LCUC(tty))
-					c=toupper(c);
-			}
-			b++; nr--;
-			cr_flag = 0;
-			PUTCH(c,tty->write_q);
-		}
-		tty->write(tty);
-		if (nr>0)
-			schedule();
-	}
-	return (b-buf);
-    */
-    0
+    b_idx as isize
 }

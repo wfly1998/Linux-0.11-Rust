@@ -66,10 +66,10 @@ fn gotoxy(new_x: usize, new_y: usize) {
 fn set_origin() {
     unsafe {
         cli();
-        outb_p(12, video_port_reg as u8);
-        outb_p(0xff&((origin-video_mem_start)>>9), video_port_val as u8);
-        outb_p(13, video_port_reg as u8);
-        outb_p(0xff&((origin-video_mem_start)>>1), video_port_val as u8);
+        outb_p(12, video_port_reg);
+        outb_p((0xff&((origin-video_mem_start)>>9)) as u8, video_port_val);
+        outb_p(13, video_port_reg);
+        outb_p((0xff&((origin-video_mem_start)>>1)) as u8, video_port_val);
         sti();
     }
 }
@@ -274,10 +274,10 @@ unsafe fn csi_m() {
 #[inline]
 unsafe fn set_cursor() {
     cli();
-    outb_p(14, video_port_reg as u8);
-    outb_p(0xff&((pos-video_mem_start)>>9), video_port_val as u8);
-    outb_p(15, video_port_reg as u8);
-    outb_p(0xff&((pos-video_mem_start)>>1), video_port_val as u8);
+    outb_p(14, video_port_reg);
+    outb_p((0xff&((pos-video_mem_start)>>9)) as u8, video_port_val);
+    outb_p(15, video_port_reg);
+    outb_p((0xff&((pos-video_mem_start)>>1)) as u8, video_port_val);
     sti();
 }
 

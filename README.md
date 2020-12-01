@@ -18,8 +18,9 @@ make qemu
 
 ## TODO List
 
-- [x] Run `bootsect.s` and `setup.s`
+- [x] Run bootloader (`bootsect.s` and `setup.s`)
 - [x] Run `main.rs` with `head.s`
-- [x] Finish `con_write` function
-- [ ] Finish tty
-- [ ] Add `trap_init` function
+- [x] Finish tty (console + serial)
+- [ ] Finish trap
+- [ ] Finish mem
+
