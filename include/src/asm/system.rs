@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::head::*;
+use crate::linux::head::*;
 
 #[inline]
 pub unsafe fn hlt() {

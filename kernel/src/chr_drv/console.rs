@@ -408,8 +408,8 @@ pub fn con_write(tty: &mut tty_struct) {
                         pos -= video_size_row;
                         lf();
                     }
-                    // *(pos as *mut u16) = (attr as u16) << 8 | (c as u16);
-                    *(pos as *mut u16) = 0x07 << 8 | (c as u16);
+                    llvm_asm!("movw %ax, (%edx)"
+                              ::"{ah}"(attr), "{al}"(c), "{edx}"(pos));  
                     pos += 2;
                     x += 1;
                 } else if (c==27) {
@@ -674,6 +674,8 @@ pub fn con_init() {
         a = inb_p(0x61);
         outb_p((a|0x80).into(), 0x61);
         outb(a.into(), 0x61);
+
+        attr = 0x07;        // I have no idea why it's always 0
     }
 }
 /* from bsd-net-2: */

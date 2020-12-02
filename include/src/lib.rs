@@ -4,7 +4,6 @@
 
 pub mod asm;
 pub mod ctype;
-pub mod head;
 pub mod linux;
 pub mod signal;
 pub mod termios;
