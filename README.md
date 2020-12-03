@@ -21,6 +21,6 @@ make qemu
 - [x] Run bootloader (`bootsect.s` and `setup.s`)
 - [x] Run `main.rs` with `head.s`
 - [x] Finish tty (console + serial)
-- [ ] Finish trap
-- [ ] Finish mem
+- [ ] Finish trap (It's toooooooo difficult to add it module by module)
+- [ ] Finish mem (Unknown bug will occur to make tty boom)
 

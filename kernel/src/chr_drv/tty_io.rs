@@ -1,3 +1,4 @@
+use include::{INC, DEC};
 use include::ctype::*;
 use include::asm::segment::*;
 use include::asm::system::*;
@@ -182,6 +183,170 @@ fn sleep_if_full(queue: &tty_queue) {
     */
 }
 
+fn wait_for_keypress() {
+    unsafe { sleep_if_empty(&tty_table[0].secondary); }
+}
+
+fn copy_to_cooked(tty: &mut tty_struct) {
+    let mut c: u8;
+
+    while (!EMPTY(&tty.read_q) && !FULL(&tty.secondary)) {
+        c = GETCH(&mut tty.read_q);
+        if (c == 13) {
+            if (I_CRNL(tty) != 0) {
+                c = 10;
+            } else if (I_NOCR(tty) != 0) {
+                continue;
+            }
+        } else if (c == 10 && I_NLCR(tty) != 0) {
+            c = 13;
+        }
+        if (I_UCLC(tty) != 0) {
+            c = tolower(c);
+        }
+        if (L_CANON(tty) != 0) {
+            if (c==KILL_CHAR(tty)) {
+                /* deal with killing the input line */
+                // while(!(EMPTY(tty->secondary) || (c=LAST(tty->secondary))==10 || c==EOF_CHAR(tty))) {
+                loop {
+                    if (EMPTY(&tty.secondary)) {
+                        break;
+                    }
+                    c = LAST(&tty.secondary);
+                    if (c == 10 || c == EOF_CHAR(tty)) {
+                        break;
+                    }
+                    if (L_ECHO(tty) != 0) {
+                        if (c<32) {
+                            PUTCH(127, &mut tty.write_q);
+                        }
+                        PUTCH(127, &mut tty.write_q);
+                        (tty.write)(tty);
+                    }
+                    DEC!(tty.secondary.head);
+                }
+                continue;
+            }
+            if (c==ERASE_CHAR(tty)) {
+                if (EMPTY(&tty.secondary)) {
+                    continue;
+                }
+                c = LAST(&tty.secondary);
+                if (c == 10 || c == EOF_CHAR(tty)) {
+                    continue;
+                }
+                if (L_ECHO(tty) != 0) {
+                    if (c<32) {
+                        PUTCH(127, &mut tty.write_q);
+                    }
+                    PUTCH(127, &mut tty.write_q);
+                    (tty.write)(tty);
+                }
+                DEC!(tty.secondary.head);
+                continue;
+            }
+            if (c==STOP_CHAR(tty)) {
+                tty.stopped = 1;
+                continue;
+            }
+            if (c==START_CHAR(tty)) {
+                tty.stopped = 0;
+                continue;
+            }
+        }
+        if (L_ISIG(tty) != 0) {
+            if (c == INTR_CHAR(tty)) {
+                tty_intr(tty, INTMASK as usize);
+                continue;
+            }
+            if (c == QUIT_CHAR(tty)) {
+                tty_intr(tty, QUITMASK as usize);
+                continue;
+            }
+        }
+        if (c == 10 || c == EOF_CHAR(tty)) {
+            tty.secondary.data += 1;
+        }
+        if (L_ECHO(tty) != 0) {
+            if (c == 10) {
+                PUTCH(10, &mut tty.write_q);
+                PUTCH(13, &mut tty.write_q);
+            } else if (c < 32) {
+                if (L_ECHOCTL(tty) != 0) {
+                    PUTCH('^' as u8, &mut tty.write_q);
+                    PUTCH(c+64, &mut tty.write_q);
+                }
+            } else {
+                PUTCH(c, &mut tty.write_q);
+            }
+            (tty.write)(tty);
+        }
+        PUTCH(c, &mut tty.secondary);
+    }
+    // wake_up(&tty.secondary.proc_list);
+}
+
+/*
+fn tty_read(channel: usize, buf: &[u8], nr: usize) -> isize {
+	struct tty_struct * tty;
+	char c, * b=buf;
+	int minimum,time,flag=0;
+	long oldalarm;
+
+	if (channel>2 || nr<0) return -1;
+	tty = &tty_table[channel];
+	oldalarm = current->alarm;
+	time = 10L*tty->termios.c_cc[VTIME];
+	minimum = tty->termios.c_cc[VMIN];
+	if (time && !minimum) {
+		minimum=1;
+		if ((flag=(!oldalarm || time+jiffies<oldalarm)))
+			current->alarm = time+jiffies;
+	}
+	if (minimum>nr)
+		minimum=nr;
+	while (nr>0) {
+		if (flag && (current->signal & ALRMMASK)) {
+			current->signal &= ~ALRMMASK;
+			break;
+		}
+		if (current->signal)
+			break;
+		if (EMPTY(tty->secondary) || (L_CANON(tty) &&
+		!tty->secondary.data && LEFT(tty->secondary)>20)) {
+			sleep_if_empty(&tty->secondary);
+			continue;
+		}
+		do {
+			GETCH(tty->secondary,c);
+			if (c==EOF_CHAR(tty) || c==10)
+				tty->secondary.data--;
+			if (c==EOF_CHAR(tty) && L_CANON(tty))
+				return (b-buf);
+			else {
+				put_fs_byte(c,b++);
+				if (!--nr)
+					break;
+			}
+		} while (nr>0 && !EMPTY(tty->secondary));
+		if (time && !L_CANON(tty)) {
+			if ((flag=(!oldalarm || time+jiffies<oldalarm)))
+				current->alarm = time+jiffies;
+			else
+				current->alarm = oldalarm;
+		}
+		if (L_CANON(tty)) {
+			if (b-buf)
+				break;
+		} else if (b-buf >= minimum)
+			break;
+	}
+	current->alarm = oldalarm;
+	if (current->signal && !(b-buf))
+		return -EINTR;
+	return (b-buf);
+}
+*/
 
 pub fn tty_write(channel: usize, buf: &[u8], mut nr: usize) -> isize {
     let mut cr_flag: bool = false;
@@ -222,3 +387,11 @@ pub fn tty_write(channel: usize, buf: &[u8], mut nr: usize) -> isize {
     }
     b_idx as isize
 }
+
+fn do_tty_interrupt(tty: usize) {
+    unsafe { copy_to_cooked(&mut tty_table[tty]); }
+}
+
+fn chr_dev_init() {
+}
+

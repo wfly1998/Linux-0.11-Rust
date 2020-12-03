@@ -5,8 +5,6 @@ use include::asm::io::*;
 use include::asm::system::*;
 use crate::{print, println};
 
-global_asm!(include_str!("asm.s"));
-
 #[inline]
 unsafe fn get_seg_byte(seg: u16, addr: usize) -> u8 {
     let __res: u8;
@@ -70,8 +68,8 @@ extern "C" {
     fn stack_segment();
     fn general_protection();
     fn page_fault();
-    fn reserved();
     fn coprocessor_error();
+    fn reserved();
     fn parallel_interrupt();
     fn irq13();
 }

@@ -9,7 +9,9 @@ pub struct tty_queue {
     pub buf: [u8; TTY_BUF_SIZE],
 }
 
+#[macro_export]
 macro_rules! INC { ($($a: tt)+) => { $($a)+ = ($($a)+ + 1) & (TTY_BUF_SIZE - 1); } }
+#[macro_export]
 macro_rules! DEC { ($($a: tt)+) => { $($a)+ = ($($a)+ - 1) & (TTY_BUF_SIZE - 1); } }
 #[inline]
 pub fn EMPTY(a: &tty_queue) -> bool { a.head == a.tail }
@@ -38,7 +40,7 @@ pub fn EOF_CHAR(tty: &tty_struct) -> u8 { tty.termios.c_cc[VEOF as usize] }
 #[inline]
 pub fn START_CHAR(tty: &tty_struct) -> u8 { tty.termios.c_cc[VSTART as usize] }
 #[inline]
-pub fn STOP_CHART_CHAR(tty: &tty_struct) -> u8 { tty.termios.c_cc[VSTOP as usize] }
+pub fn STOP_CHAR(tty: &tty_struct) -> u8 { tty.termios.c_cc[VSTOP as usize] }
 #[inline]
 pub fn SUSPEND_CHART_CHAR(tty: &tty_struct) -> u8 { tty.termios.c_cc[VSUSP as usize] }
 
