@@ -26,7 +26,5 @@ make qemu
 
 ## Progress
 
-Now I have no idea why my os cannot receive timer interrupt
-And I have no idea where "Unknown Interrupt" should send EOI signal
-qwq
+Now my os can receive timer interrupt, but garbled will occur.
 
