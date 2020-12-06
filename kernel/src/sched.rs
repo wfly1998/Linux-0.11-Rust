@@ -33,9 +33,7 @@ pub fn sched_init() {
     */
     /* Clear NT, so that we won't have troubles with that later on */
     unsafe {
-    llvm_asm!(r#"pushfl
-                 andl 0xffffbfff, (%esp)
-                 popfl"#);
+        // llvm_asm!("pushfl; andl 0xffffbfff, (%esp); popfl");
         ltr(0);
         lldt(0);
         outb_p(0x36, 0x43);		/* binary, mode 3, LSB/MSB, ch 0 */

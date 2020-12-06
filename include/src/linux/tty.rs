@@ -18,11 +18,11 @@ pub fn EMPTY(a: &tty_queue) -> bool { a.head == a.tail }
 #[inline]
 pub fn LEFT(a: &tty_queue) -> usize { unsafe { (a.tail.unchecked_sub(a.head).unchecked_sub(1)) & (TTY_BUF_SIZE-1) } }
 #[inline]
-pub fn LAST(a: &tty_queue) -> u8 { a.buf[(TTY_BUF_SIZE-1) & (a.head-1)] }
+pub fn LAST(a: &tty_queue) -> u8 { unsafe { a.buf[(TTY_BUF_SIZE-1) & (a.head.unchecked_sub(1))] } }
 #[inline]
 pub fn FULL(a: &tty_queue) -> bool { LEFT(a) == 0 }
 #[inline]
-pub fn CHARS(a: &tty_queue) -> usize { (a.head-a.tail) & (TTY_BUF_SIZE-1) }
+pub fn CHARS(a: &tty_queue) -> usize { unsafe { (a.head.unchecked_sub(a.tail)) & (TTY_BUF_SIZE-1) } }
 #[inline]
 pub fn GETCH(queue: &mut tty_queue) -> u8 { let c = queue.buf[queue.tail]; INC!(queue.tail); c }
 #[inline]
