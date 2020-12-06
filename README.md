@@ -24,3 +24,9 @@ make qemu
 - [ ] Finish trap (It's toooooooo difficult to add it module by module)
 - [ ] Finish mem (Unknown bug will occur to make tty boom)
 
+## Progress
+
+Now I have no idea why my os cannot receive timer interrupt
+And I have no idea where "Unknown Interrupt" should send EOI signal
+qwq
+

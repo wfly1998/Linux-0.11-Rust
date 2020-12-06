@@ -15,6 +15,7 @@ use kernel::println;
 
 global_asm!(include_str!("head.s"));
 global_asm!(include_str!("asm.s"));
+// global_asm!(include_str!("keyboard.s"));
 global_asm!(include_str!("system_call.s"));
 
 #[repr(C)]
