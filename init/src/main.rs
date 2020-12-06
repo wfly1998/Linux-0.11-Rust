@@ -6,8 +6,9 @@
 
 use core::panic::PanicInfo;
 
-use include::asm::system::*;
+// use include::asm::system::*;
 use kernel::chr_drv::tty_io::*;
+use kernel::sched::*;
 use kernel::trap::*;
 use kernel::println;
 
@@ -66,6 +67,7 @@ pub extern "C" fn main() -> ! {
 
     trap_init();
     tty_init();
+    sched_init();
     println!("Hello");
     loop {
         // unsafe { hlt(); }

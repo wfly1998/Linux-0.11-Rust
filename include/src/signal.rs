@@ -36,6 +36,7 @@ pub const SIG_BLOCK:    i32 = 0;    /* for blocking signals */
 pub const SIG_UNBLOCK:  i32 = 1;    /* for unblocking signals */
 pub const SIG_SETMASK:  i32 = 2;    /* for setting the signal mask */
 
+#[repr(C)]
 pub struct sigaction {
     sa_handler: fn(i32),
     sa_mask: sigset_t,
