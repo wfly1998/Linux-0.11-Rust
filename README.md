@@ -28,3 +28,7 @@ make qemu
 
 Now my os can receive timer interrupt, but garbled will occur.
 
+And unknown bug will occur...
+
+When I add crate `mm` to `init/Cargo.toml`, os will not boot.
+

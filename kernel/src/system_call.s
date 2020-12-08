@@ -72,15 +72,13 @@ nr_system_calls = 74
 bad_sys_call:
 	movl $-1,%eax
 	iret
-/*
 .align 2
 reschedule:
 	pushl $ret_from_sys_call
 	jmp schedule
-*/
-/*
 .align 2
 system_call:
+/*
 	cmpl $nr_system_calls-1,%eax
 	ja bad_sys_call
 	push %ds
@@ -101,7 +99,9 @@ system_call:
 	jne reschedule
 	cmpl $0,counter(%eax)		# counter
 	je reschedule
+*/
 ret_from_sys_call:
+/*
 	movl current,%eax		# task[0] cannot have signals
 	cmpl task,%eax
 	je 3f
@@ -121,17 +121,8 @@ ret_from_sys_call:
 	pushl %ecx
 	call do_signal
 	popl %eax
-3:	popl %eax
-	popl %ebx
-	popl %ecx
-	popl %edx
-	pop %fs
-	pop %es
-	pop %ds
-	iret
 */
-ret_from_sys_call:
-	popl %eax
+3:	popl %eax
 	popl %ebx
 	popl %ecx
 	popl %edx
@@ -187,7 +178,6 @@ device_not_available:
 	ret
 */
 
-/*
 .align 2
 timer_interrupt:
 	push %ds		# save ds,es and put kernel data space
@@ -211,7 +201,6 @@ timer_interrupt:
 	call do_timer		# 'do_timer(long CPL)' does everything from
 	addl $4,%esp		# task switching to accounting ...
 	jmp ret_from_sys_call
-*/
 
 /*
 .align 2

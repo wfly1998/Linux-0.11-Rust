@@ -11,6 +11,7 @@ use kernel::chr_drv::tty_io::*;
 use kernel::sched::*;
 use kernel::trap::*;
 use kernel::println;
+// use mm::memory::*;
 
 // use lazy_static::lazy_static;
 
@@ -24,14 +25,6 @@ global_asm!(include_str!("system_call.s"));
 struct drive_info_t { dummy: [u8; 32], }
 
 // extern "C" { static mut ROOT_DEV: usize; }
-/*
-lazy_static! {
-    static ref memory_end: usize = 0;
-    static ref buffer_memory_end: usize = 0;
-    static ref main_memory_start: usize = 0;
-    static ref drive_info: drive_info_t = drive_info_t { dummy: [0; 32], };
-}
-*/
 static mut memory_end: usize = 0;
 static mut buffer_memory_end: usize = 0;
 static mut main_memory_start: usize = 0;
@@ -65,6 +58,7 @@ pub extern "C" fn main() -> ! {
         // */
     }
 
+    // unsafe { mem_init(main_memory_start, memory_end); }
     trap_init();
     tty_init();
     sched_init();
