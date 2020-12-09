@@ -6,12 +6,12 @@
 
 use core::panic::PanicInfo;
 
-// use include::asm::system::*;
+use include::asm::system::*;
 use kernel::chr_drv::tty_io::*;
 use kernel::sched::*;
 use kernel::trap::*;
 use kernel::println;
-// use mm::memory::*;
+use mm::memory::*;
 
 // use lazy_static::lazy_static;
 
@@ -39,7 +39,7 @@ pub extern "C" fn main() -> ! {
     unsafe {
         // ROOT_DEV = ORIG_ROOT_DEV as usize;
         drive_info = DRIVE_INFO;
-        /*
+        // /*
         memory_end = (1usize<<20) + (EXT_MEM_K<<10) as usize;
         memory_end &= 0xfffff000;
         if (memory_end > 16*1024*1024) {
@@ -58,17 +58,19 @@ pub extern "C" fn main() -> ! {
         // */
     }
 
-    // unsafe { mem_init(main_memory_start, memory_end); }
+    unsafe {
+        mem_init(main_memory_start, memory_end);
+    }
     trap_init();
     tty_init();
     sched_init();
     println!("Hello");
     loop {
-        // unsafe { hlt(); }
+        unsafe { hlt(); }
     }
 }
 
 #[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
+fn panic(info: &PanicInfo) -> ! {
     loop {}
 }

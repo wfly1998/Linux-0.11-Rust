@@ -1,4 +1,4 @@
-.PHONY: all clean qemu
+.PHONY: all clean qemu count disasm section elf
 
 mode ?= debug
 
@@ -67,4 +67,13 @@ debug: image
 
 count:
 	find . -name '*.rs' | xargs wc -l
+
+disasm: tools/system
+	objdump -d tools/system | less
+
+section: tools/system
+	objdump -h tools/system | less
+
+elf: tools/system
+	readelf -h tools/system | less
 

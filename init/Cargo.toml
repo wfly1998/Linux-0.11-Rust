@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 include = { path = "../include" }
 kernel = { path = "../kernel"}
-# mm = { path = "../mm"}
+mm = { path = "../mm"}
 # spin = "0.5"
 # lazy_static = { version = "1.4", features = ["spin_no_std"] }
 
