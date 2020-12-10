@@ -31,24 +31,26 @@ fn copy_page(from: usize, to: usize) {
     unsafe { llvm_asm!("cld ; rep ; movsl"::"S" (from),"D" (to),"c" (1024)) }
 }
 
-static mut mem_map: [u8; PAGING_PAGES] = [0; PAGING_PAGES];
+static mut MEM_MAP: [u8; PAGING_PAGES] = [0; PAGING_PAGES];
 
 
-pub fn mem_init(start_mem: usize, mut end_mem: usize)
+#[no_mangle]
+pub fn mem_init(start_mem: usize, end_mem: usize)
 {
     unsafe {
         HIGH_MEMORY = end_mem;
         for i in 0..PAGING_PAGES {
-            mem_map[i] = USED;
+            MEM_MAP[i] = USED;
         }
+        /*
         let mut i = MAP_NR(start_mem);
-        end_mem -= start_mem;
-        end_mem >>= 12;
-        while (end_mem > 0) {
+        let mut end_mem = (end_mem - start_mem) >> 12;
+        while end_mem > 0 {
             end_mem -= 1;
-            mem_map[i]=0;
+            MEM_MAP[i]=0;
             i += 1;
-        }
+        }   // error will occur if use this codes
+        */
     }
 }
 

@@ -53,7 +53,7 @@ const RESPONSE: [u8; 7] = [33, '[' as u8, '?' as u8, '1' as u8, ';' as u8, '2' a
 #[inline]
 fn gotoxy(new_x: usize, new_y: usize) {
     unsafe {
-        if (new_x > video_num_columns || new_y >= video_num_lines) {
+        if new_x > video_num_columns || new_y >= video_num_lines {
             return;
         }
         x=new_x;
@@ -75,12 +75,12 @@ fn set_origin() {
 }
 
 unsafe fn scrup() {
-    if (video_type == VIDEO_TYPE_EGAC || video_type == VIDEO_TYPE_EGAM) {
-        if (top == 0 && bottom == video_num_lines) {
+    if video_type == VIDEO_TYPE_EGAC || video_type == VIDEO_TYPE_EGAM {
+        if top == 0 && bottom == video_num_lines {
             origin += video_size_row;
             pos += video_size_row;
             scr_end += video_size_row;
-            if (scr_end > video_mem_end) {
+            if scr_end > video_mem_end {
                 llvm_asm!(r#"cld
                              rep
                              movsl
@@ -136,8 +136,7 @@ unsafe fn scrup() {
 }
 
 unsafe fn scrdown() {
-    if (video_type == VIDEO_TYPE_EGAC || video_type == VIDEO_TYPE_EGAM)
-    {
+    if video_type == VIDEO_TYPE_EGAC || video_type == VIDEO_TYPE_EGAM {
         llvm_asm!(r#"std
                      rep
                      movsl
@@ -169,7 +168,7 @@ unsafe fn scrdown() {
 }
 
 unsafe fn lf() {
-    if (y+1<bottom) {
+    if y+1<bottom {
         y += 1;
         pos += video_size_row;
         return;
@@ -178,7 +177,7 @@ unsafe fn lf() {
 }
 
 unsafe fn ri() {
-    if (y>top) {
+    if y>top {
         y -= 1;
         pos -= video_size_row;
         return;
@@ -192,7 +191,7 @@ unsafe fn cr() {
 }
 
 unsafe fn del() {
-    if (x != 0) {
+    if x != 0 {
         pos -= 2;
         x -= 1;
         *(pos as *mut u16) = video_erase_char;
@@ -203,7 +202,7 @@ unsafe fn csi_J(par_: usize) {
     let count: usize;
     let start: usize;
 
-    match(par_) {
+    match par_ {
         0 => {  /* erase from cursor to end of display */
             count = (scr_end - pos) >> 1;
             start = pos;
@@ -232,9 +231,9 @@ unsafe fn csi_K(par_: usize) {
     let count: usize;
     let start: usize;
 
-    match(par_) {
+    match par_ {
         0 => {  /* erase from cursor to end of line */
-            if (x >= video_num_columns) {
+            if x >= video_num_columns {
                 return;
             }
             count = video_num_columns - x;
@@ -242,7 +241,7 @@ unsafe fn csi_K(par_: usize) {
         },
         1 => {  /* erase from start of line to cursor */
             start = pos - (x << 1);
-            count = if (x < video_num_columns) { x } else { video_num_columns };
+            count = if x < video_num_columns { x } else { video_num_columns };
         },
         2 => {  /* erase whole line */
             start = pos - (x << 1);
@@ -262,7 +261,7 @@ unsafe fn csi_K(par_: usize) {
 
 unsafe fn csi_m() {
     for i in 0..=npar {
-        match (par[i]) {
+        match par[i] {
             0 | 27 => attr = 0x07,
             1 | 4 => attr = 0x0f,
             7 => attr = 0x70,
@@ -295,7 +294,7 @@ unsafe fn insert_char() {
     let mut tmp: u16;
     let mut old: u16 = video_erase_char;
     let mut p: *mut u16 = pos as *mut u16;
-    while (i < video_num_columns) {
+    while i < video_num_columns {
         i += 1;
         tmp = *p;
         *p = old;
@@ -317,11 +316,11 @@ unsafe fn insert_line() {
 unsafe fn delete_char() {
     let mut i: usize = x;
     let mut p: *mut u16 = pos as *mut u16;
-    if (x >= video_num_columns) {
+    if x >= video_num_columns {
         return;
     }
     i += 1;
-    while (i < video_num_columns) {
+    while i < video_num_columns {
         let tmp: *mut u16 = ((p as *const _ as usize) + 2) as *mut u16;
         *p = *tmp;
         p = tmp;
@@ -341,9 +340,9 @@ unsafe fn delete_line() {
 }
 
 unsafe fn csi_at(mut nr: usize) {
-    if (nr > video_num_columns) {
+    if nr > video_num_columns {
         nr = video_num_columns;
-    } else if (nr == 0) {
+    } else if nr == 0 {
         nr = 1;
     }
     for _ in 0..nr {
@@ -352,9 +351,9 @@ unsafe fn csi_at(mut nr: usize) {
 }
 
 unsafe fn csi_L(mut nr: usize) {
-    if (nr > video_num_lines) {
+    if nr > video_num_lines {
         nr = video_num_lines;
-    } else if (nr == 0) {
+    } else if nr == 0 {
         nr = 1;
     }
     for _ in 0..nr {
@@ -363,9 +362,9 @@ unsafe fn csi_L(mut nr: usize) {
 }
 
 unsafe fn csi_P(mut nr: usize) {
-    if (nr > video_num_columns) {
+    if nr > video_num_columns {
         nr = video_num_columns;
-    } else if (nr == 0) {
+    } else if nr == 0 {
         nr = 1;
     }
     for _ in 0..nr {
@@ -374,9 +373,9 @@ unsafe fn csi_P(mut nr: usize) {
 }
 
 unsafe fn csi_M(mut nr: usize) {
-    if (nr > video_num_lines) {
+    if nr > video_num_lines {
         nr = video_num_lines;
-    } else if (nr == 0) {
+    } else if nr == 0 {
         nr = 1;
     }
     for _ in 0..nr {
@@ -401,9 +400,9 @@ pub fn con_write(tty: &mut tty_struct) {
         let nr = CHARS(&tty.write_q);
         for _ in 0..nr{
             let mut c: u8 = GETCH(&mut tty.write_q);
-            if (state == 0) {
-                if (c>31 && c<127) {
-                    if (x>=video_num_columns) {
+            if state == 0 {
+                if c>31 && c<127 {
+                    if x>=video_num_columns {
                         x -= video_num_columns;
                         pos -= video_size_row;
                         lf();
@@ -412,128 +411,128 @@ pub fn con_write(tty: &mut tty_struct) {
                               ::"{ah}"(attr), "{al}"(c), "{edx}"(pos));  
                     pos += 2;
                     x += 1;
-                } else if (c==27) {
+                } else if c==27 {
                     state=1;
                 }
-                else if (c==10 || c==11 || c==12) {
+                else if c==10 || c==11 || c==12 {
                     lf();
-                } else if (c==13) {
+                } else if c==13 {
                     cr();
-                } else if (c==ERASE_CHAR(tty)) {
+                } else if c==ERASE_CHAR(tty) {
                     del();
-                } else if (c==8) {
-                    if (x != 0) {
+                } else if c==8 {
+                    if x != 0 {
                         x -= 1;
                         pos -= 2;
                     }
-                } else if (c==9) {
+                } else if c==9 {
                     c=8 - (x&7) as u8;
                     x += c as usize;
                     pos += (c as usize)<<1;
-                    if (x>video_num_columns) {
+                    if x>video_num_columns {
                         x -= video_num_columns;
                         pos -= video_size_row;
                         lf();
                     }
                     c = 9;
-                } else if (c==7) {
+                } else if c==7 {
                     sysbeep();
                 }
-            } else if (state == 1) {
+            } else if state == 1 {
                 state=0;
-                if (c=='[' as u8) {
+                if c=='[' as u8 {
                     state=2;
-                } else if (c=='E' as u8) {
+                } else if c=='E' as u8 {
                     gotoxy(0,y+1);
-                } else if (c=='M' as u8) {
+                } else if c=='M' as u8 {
                     ri();
-                } else if (c=='D' as u8) {
+                } else if c=='D' as u8 {
                     lf();
-                } else if (c=='Z' as u8) {
+                } else if c=='Z' as u8 {
                     respond(tty);
-                } else if (x=='7' as usize) {
+                } else if x=='7' as usize {
                     save_cur();
-                } else if (x=='8' as usize) {
+                } else if x=='8' as usize {
                     restore_cur();
                 }
             } else {
                 loop {
-                    if (state == 2) {
+                    if state == 2 {
                         for npar_ in 0..NPAR {
                             par[npar_] = 0;
                         }
                         npar = NPAR;
                         state = 3;
-                        ques = (c == '?' as u8);
-                        if (ques) {
+                        ques = c == '?' as u8;
+                        if ques {
                             break;
                         }
-                    } else if (state == 3) {
-                        if (c==';' as u8 && npar<NPAR-1) {
+                    } else if state == 3 {
+                        if c==';' as u8 && npar<NPAR-1 {
                             npar += 1;
                             break;
-                        } else if (c>=('0' as u8) && c<=('9' as u8)) {
+                        } else if c>=('0' as u8) && c<=('9' as u8) {
                             par[npar] = 10 * par[npar] + (c - ('0' as u8)) as usize;
                             break;
                         } else {
                             state = 4;
                         }
-                    } else if (state == 4) {
+                    } else if state == 4 {
                         state = 0;
-                        match (c as char) {
+                        match c as char {
                             'G' | '`' => {
-                                if (par[0] != 0) {
+                                if par[0] != 0 {
                                     par[0] -= 1;
                                 }
                                 gotoxy(par[0], y);
                             },
                             'A' => {
-                                if (par[0] == 0) {
+                                if par[0] == 0 {
                                     par[0] += 1;
                                 }
                                 gotoxy(x, y-par[0]);
                             },
                             'B' | 'e' => {
-                                if (par[0] == 0) {
+                                if par[0] == 0 {
                                     par[0] += 1;
                                 }
                                 gotoxy(x, y+par[0]);
                             },
                             'C' | 'a' => {
-                                if (par[0] == 0) {
+                                if par[0] == 0 {
                                     par[0] += 1;
                                 }
                                 gotoxy(x+par[0], y);
                             },
                             'D' => {
-                                if (par[0] == 0) {
+                                if par[0] == 0 {
                                     par[0] += 1;
                                 }
                                 gotoxy(x-par[0], y);
                             },
                             'E' => {
-                                if (par[0] == 0) {
+                                if par[0] == 0 {
                                     par[0] += 1;
                                 }
                                 gotoxy(0, y+par[0]);
                             },
                             'F' => {
-                                if (par[0] == 0) {
+                                if par[0] == 0 {
                                     par[0] += 1;
                                 }
                                 gotoxy(0, y-par[0]);
                             },
                             'd' => {
-                                if (par[0] != 0) {
+                                if par[0] != 0 {
                                     par[0] -= 1;
                                 }
                                 gotoxy(x, par[0]);
                             },
                             'H' | 'f' => {
-                                if (par[0] != 0) {
+                                if par[0] != 0 {
                                     par[0] -= 1;
                                 }
-                                if (par[1] != 0) {
+                                if par[1] != 0 {
                                     par[1] -= 1;
                                 }
                                 gotoxy(par[1], par[0]);
@@ -560,13 +559,13 @@ pub fn con_write(tty: &mut tty_struct) {
                                 csi_m();
                             },
                             'r' => {
-                                if (par[0] != 0) {
+                                if par[0] != 0 {
                                     par[0] -= 1;
                                 }
-                                if (par[1] == 0) {
+                                if par[1] == 0 {
                                     par[1] = video_num_lines;
                                 }
-                                if (par[0] < par[1] && par[1] <= video_num_lines) {
+                                if par[0] < par[1] && par[1] <= video_num_lines {
                                     top = par[0];
                                     bottom = par[1];
                                 }
@@ -619,12 +618,11 @@ pub fn con_init() {
         video_page = ORIG_VIDEO_PAGE as u8;
         video_erase_char = 0x0720;
 
-        if (ORIG_VIDEO_MODE == 7) {     /* Is this a monochrome display? */
+        if ORIG_VIDEO_MODE == 7 {     /* Is this a monochrome display? */
             video_mem_start = 0xb0000;
             video_port_reg = 0x3b4;
             video_port_val = 0x3b5;
-            if ((ORIG_VIDEO_EGA_BX & 0xff) != 0x10)
-            {
+            if (ORIG_VIDEO_EGA_BX & 0xff) != 0x10 {
                 video_type = VIDEO_TYPE_EGAM;
                 video_mem_end = 0xb8000;
                 display_desc = "EGAm";
@@ -639,8 +637,7 @@ pub fn con_init() {
             video_mem_start = 0xb8000;
             video_port_reg	= 0x3d4;
             video_port_val	= 0x3d5;
-            if ((ORIG_VIDEO_EGA_BX & 0xff) != 0x10)
-            {
+            if (ORIG_VIDEO_EGA_BX & 0xff) != 0x10 {
                 video_type = VIDEO_TYPE_EGAC;
                 video_mem_end = 0xbc000;
                 display_desc = "EGAc";
@@ -674,8 +671,6 @@ pub fn con_init() {
         a = inb_p(0x61);
         outb_p((a|0x80).into(), 0x61);
         outb(a.into(), 0x61);
-
-        attr = 0x07;        // I have no idea why it's always 0
     }
 }
 /* from bsd-net-2: */

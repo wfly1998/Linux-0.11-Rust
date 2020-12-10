@@ -40,7 +40,7 @@ pub extern "C" fn main() -> ! {
         // ROOT_DEV = ORIG_ROOT_DEV as usize;
         drive_info = DRIVE_INFO;
         // /*
-        memory_end = (1usize<<20) + (EXT_MEM_K<<10) as usize;
+        memory_end = (1usize<<20) + (EXT_MEM_K as usize) << 10;
         memory_end &= 0xfffff000;
         if (memory_end > 16*1024*1024) {
             memory_end = 16*1024*1024;
@@ -59,6 +59,7 @@ pub extern "C" fn main() -> ! {
     }
 
     unsafe {
+        // println!("main_memory_start: {:x}, memory_end: {:x}", main_memory_start, memory_end);
         mem_init(main_memory_start, memory_end);
     }
     trap_init();
@@ -74,3 +75,4 @@ pub extern "C" fn main() -> ! {
 fn panic(info: &PanicInfo) -> ! {
     loop {}
 }
+
