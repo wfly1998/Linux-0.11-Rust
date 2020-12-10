@@ -23,6 +23,9 @@ make qemu
 - [x] Finish tty (console + serial)
 - [ ] Finish trap (It's toooooooo difficult to add it module by module)
 - [ ] Finish mem (Unknown bug will occur to make tty boom)
+- [ ] Finish process (task)
+- [ ] Finish syscall
+- [ ] Finish fs
 
 ## Progress
 
