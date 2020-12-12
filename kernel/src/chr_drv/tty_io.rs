@@ -1,8 +1,9 @@
-use include::{INC, DEC};
+#![allow(dead_code)]
+use include::DEC;
 use include::ctype::*;
 use include::asm::segment::*;
 use include::asm::system::*;
-use include::linux::sched::*;
+// use include::linux::sched::*;
 use include::linux::tty::*;
 use include::signal::*;
 use include::termios::*;
@@ -15,30 +16,30 @@ const INTMASK:  u32 = (1 << SIGINT) - 1;
 const QUITMASK: u32 = (1 << SIGQUIT) - 1;
 const TSTPMASK: u32 = (1 << SIGTSTP) - 1;
 
-#[inline] fn _L_FLAG(tty: &tty_struct, f: usize) -> usize { tty.termios.c_lflag & f }
-#[inline] fn _I_FLAG(tty: &tty_struct, f: usize) -> usize { tty.termios.c_iflag & f }
-#[inline] fn _O_FLAG(tty: &tty_struct, f: usize) -> usize { tty.termios.c_oflag & f }
+#[inline] fn _l_flag(tty: &tty_struct, f: usize) -> usize { tty.termios.c_lflag & f }
+#[inline] fn _i_flag(tty: &tty_struct, f: usize) -> usize { tty.termios.c_iflag & f }
+#[inline] fn _o_flag(tty: &tty_struct, f: usize) -> usize { tty.termios.c_oflag & f }
 
-#[inline] fn L_CANON(tty: &tty_struct) -> usize {  _L_FLAG(tty, ICANON) }
-#[inline] fn L_ISIG(tty: &tty_struct) -> usize { _L_FLAG(tty, ISIG) }
-#[inline] fn L_ECHO(tty: &tty_struct) -> usize { _L_FLAG(tty, ECHO) }
-#[inline] fn L_ECHOE(tty: &tty_struct) -> usize { _L_FLAG(tty, ECHOE) }
-#[inline] fn L_ECHOK(tty: &tty_struct) -> usize { _L_FLAG(tty, ECHOK) }
-#[inline] fn L_ECHOCTL(tty: &tty_struct) -> usize { _L_FLAG(tty, ECHOCTL) }
-#[inline] fn L_ECHOKE(tty: &tty_struct) -> usize { _L_FLAG(tty, ECHOKE) }
+#[inline] fn l_canon(tty: &tty_struct) -> usize {  _l_flag(tty, ICANON) }
+#[inline] fn l_isig(tty: &tty_struct) -> usize { _l_flag(tty, ISIG) }
+#[inline] fn l_echo(tty: &tty_struct) -> usize { _l_flag(tty, ECHO) }
+#[inline] fn l_echoe(tty: &tty_struct) -> usize { _l_flag(tty, ECHOE) }
+#[inline] fn l_echok(tty: &tty_struct) -> usize { _l_flag(tty, ECHOK) }
+#[inline] fn l_echoctl(tty: &tty_struct) -> usize { _l_flag(tty, ECHOCTL) }
+#[inline] fn l_echoke(tty: &tty_struct) -> usize { _l_flag(tty, ECHOKE) }
 
-#[inline] fn I_UCLC(tty: &tty_struct) -> usize { _I_FLAG(tty, IUCLC) }
-#[inline] fn I_NLCR(tty: &tty_struct) -> usize { _I_FLAG(tty, INLCR) }
-#[inline] fn I_CRNL(tty: &tty_struct) -> usize { _I_FLAG(tty, ICRNL) }
-#[inline] fn I_NOCR(tty: &tty_struct) -> usize { _I_FLAG(tty, IGNCR) }
+#[inline] fn i_uclc(tty: &tty_struct) -> usize { _i_flag(tty, IUCLC) }
+#[inline] fn i_nlcr(tty: &tty_struct) -> usize { _i_flag(tty, INLCR) }
+#[inline] fn i_crnl(tty: &tty_struct) -> usize { _i_flag(tty, ICRNL) }
+#[inline] fn i_nocr(tty: &tty_struct) -> usize { _i_flag(tty, IGNCR) }
 
-#[inline] fn O_POST(tty: &tty_struct) -> usize { _O_FLAG(tty, OPOST) }
-#[inline] fn O_NLCR(tty: &tty_struct) -> usize { _O_FLAG(tty, ONLCR) }
-#[inline] fn O_CRNL(tty: &tty_struct) -> usize { _O_FLAG(tty, OCRNL) }
-#[inline] fn O_NLRET(tty: &tty_struct) -> usize { _O_FLAG(tty, ONLRET) }
-#[inline] fn O_LCUC(tty: &tty_struct) -> usize { _O_FLAG(tty, OLCUC) }
+#[inline] fn o_post(tty: &tty_struct) -> usize { _o_flag(tty, OPOST) }
+#[inline] fn o_nlcr(tty: &tty_struct) -> usize { _o_flag(tty, ONLCR) }
+#[inline] fn o_crnl(tty: &tty_struct) -> usize { _o_flag(tty, OCRNL) }
+#[inline] fn o_nlret(tty: &tty_struct) -> usize { _o_flag(tty, ONLRET) }
+#[inline] fn o_lcuc(tty: &tty_struct) -> usize { _o_flag(tty, OLCUC) }
 
-pub static mut tty_table: [tty_struct; 3] = [
+pub static mut TTY_TABLE: [tty_struct; 3] = [
     tty_struct {
         termios: termios {
             c_iflag: ICRNL,         /* change incoming CR to NL */
@@ -141,11 +142,11 @@ pub fn tty_init() {
 
 fn tty_intr(tty: &tty_struct, mask: usize) {
     /*
-    if (tty.pgrp <= 0) {
+    if tty.pgrp <= 0 {
         return;
     }
     for i in 0..NR_TASKS {
-        if (tasks[i] != 0 && task[i].pgrp == tty.pgrp) {
+        if tasks[i] != 0 && task[i].pgrp == tty.pgrp {
             task[i].signal |= mask;
         }
     }
@@ -157,7 +158,7 @@ fn sleep_if_empty(queue: &tty_queue) {
         cli();
         // while (!current->signal && EMPTY(*queue))
             // interruptible_sleep_on(&queue->proc_list);
-        while (EMPTY(queue)) {
+        while EMPTY(queue) {
             hlt();
         }
         sti();
@@ -165,12 +166,12 @@ fn sleep_if_empty(queue: &tty_queue) {
 }
 
 fn sleep_if_full(queue: &tty_queue) {
-    if (FULL(queue)) {
+    if FULL(queue) {
         return;
     }
     unsafe {
         cli();
-        while (LEFT(queue) < 128) {
+        while LEFT(queue) < 128 {
             hlt();
         }
         sti();
@@ -184,40 +185,40 @@ fn sleep_if_full(queue: &tty_queue) {
 }
 
 fn wait_for_keypress() {
-    unsafe { sleep_if_empty(&tty_table[0].secondary); }
+    unsafe { sleep_if_empty(&TTY_TABLE[0].secondary); }
 }
 
 fn copy_to_cooked(tty: &mut tty_struct) {
     let mut c: u8;
 
-    while (!EMPTY(&tty.read_q) && !FULL(&tty.secondary)) {
+    while !EMPTY(&tty.read_q) && !FULL(&tty.secondary) {
         c = GETCH(&mut tty.read_q);
-        if (c == 13) {
-            if (I_CRNL(tty) != 0) {
+        if c == 13 {
+            if i_crnl(tty) != 0 {
                 c = 10;
-            } else if (I_NOCR(tty) != 0) {
+            } else if i_nocr(tty) != 0 {
                 continue;
             }
-        } else if (c == 10 && I_NLCR(tty) != 0) {
+        } else if c == 10 && i_nlcr(tty) != 0 {
             c = 13;
         }
-        if (I_UCLC(tty) != 0) {
+        if i_uclc(tty) != 0 {
             c = tolower(c);
         }
-        if (L_CANON(tty) != 0) {
-            if (c==KILL_CHAR(tty)) {
+        if l_canon(tty) != 0 {
+            if c==KILL_CHAR(tty) {
                 /* deal with killing the input line */
                 // while(!(EMPTY(tty->secondary) || (c=LAST(tty->secondary))==10 || c==EOF_CHAR(tty))) {
                 loop {
-                    if (EMPTY(&tty.secondary)) {
+                    if EMPTY(&tty.secondary) {
                         break;
                     }
                     c = LAST(&tty.secondary);
-                    if (c == 10 || c == EOF_CHAR(tty)) {
+                    if c == 10 || c == EOF_CHAR(tty) {
                         break;
                     }
-                    if (L_ECHO(tty) != 0) {
-                        if (c<32) {
+                    if l_echo(tty) != 0 {
+                        if c < 32 {
                             PUTCH(127, &mut tty.write_q);
                         }
                         PUTCH(127, &mut tty.write_q);
@@ -227,16 +228,16 @@ fn copy_to_cooked(tty: &mut tty_struct) {
                 }
                 continue;
             }
-            if (c==ERASE_CHAR(tty)) {
-                if (EMPTY(&tty.secondary)) {
+            if c==ERASE_CHAR(tty) {
+                if EMPTY(&tty.secondary) {
                     continue;
                 }
                 c = LAST(&tty.secondary);
-                if (c == 10 || c == EOF_CHAR(tty)) {
+                if c == 10 || c == EOF_CHAR(tty) {
                     continue;
                 }
-                if (L_ECHO(tty) != 0) {
-                    if (c<32) {
+                if l_echo(tty) != 0 {
+                    if c < 32 {
                         PUTCH(127, &mut tty.write_q);
                     }
                     PUTCH(127, &mut tty.write_q);
@@ -245,34 +246,34 @@ fn copy_to_cooked(tty: &mut tty_struct) {
                 DEC!(tty.secondary.head);
                 continue;
             }
-            if (c==STOP_CHAR(tty)) {
+            if c==STOP_CHAR(tty) {
                 tty.stopped = 1;
                 continue;
             }
-            if (c==START_CHAR(tty)) {
+            if c==START_CHAR(tty) {
                 tty.stopped = 0;
                 continue;
             }
         }
-        if (L_ISIG(tty) != 0) {
-            if (c == INTR_CHAR(tty)) {
+        if l_isig(tty) != 0 {
+            if c == INTR_CHAR(tty) {
                 tty_intr(tty, INTMASK as usize);
                 continue;
             }
-            if (c == QUIT_CHAR(tty)) {
+            if c == QUIT_CHAR(tty) {
                 tty_intr(tty, QUITMASK as usize);
                 continue;
             }
         }
-        if (c == 10 || c == EOF_CHAR(tty)) {
+        if c == 10 || c == EOF_CHAR(tty) {
             tty.secondary.data += 1;
         }
-        if (L_ECHO(tty) != 0) {
-            if (c == 10) {
+        if l_echo(tty) != 0 {
+            if c == 10 {
                 PUTCH(10, &mut tty.write_q);
                 PUTCH(13, &mut tty.write_q);
-            } else if (c < 32) {
-                if (L_ECHOCTL(tty) != 0) {
+            } else if c < 32 {
+                if l_echoctl(tty) != 0 {
                     PUTCH('^' as u8, &mut tty.write_q);
                     PUTCH(c+64, &mut tty.write_q);
                 }
@@ -293,24 +294,24 @@ fn tty_read(channel: usize, buf: &[u8], nr: usize) -> isize {
 	int minimum,time,flag=0;
 	long oldalarm;
 
-	if (channel>2 || nr<0) return -1;
+	if channel>2 || nr<0 return -1;
 	tty = &tty_table[channel];
 	oldalarm = current->alarm;
 	time = 10L*tty->termios.c_cc[VTIME];
 	minimum = tty->termios.c_cc[VMIN];
-	if (time && !minimum) {
+	if time && !minimum {
 		minimum=1;
-		if ((flag=(!oldalarm || time+jiffies<oldalarm)))
+		if (flag=(!oldalarm || time+jiffies<oldalarm))
 			current->alarm = time+jiffies;
 	}
-	if (minimum>nr)
+	if minimum>nr
 		minimum=nr;
 	while (nr>0) {
-		if (flag && (current->signal & ALRMMASK)) {
+		if flag && (current->signal & ALRMMASK) {
 			current->signal &= ~ALRMMASK;
 			break;
 		}
-		if (current->signal)
+		if current->signal
 			break;
 		if (EMPTY(tty->secondary) || (L_CANON(tty) &&
 		!tty->secondary.data && LEFT(tty->secondary)>20)) {
@@ -319,9 +320,9 @@ fn tty_read(channel: usize, buf: &[u8], nr: usize) -> isize {
 		}
 		do {
 			GETCH(tty->secondary,c);
-			if (c==EOF_CHAR(tty) || c==10)
+			if c==EOF_CHAR(tty) || c==10
 				tty->secondary.data--;
-			if (c==EOF_CHAR(tty) && L_CANON(tty))
+			if c==EOF_CHAR(tty) && L_CANON(tty)
 				return (b-buf);
 			else {
 				put_fs_byte(c,b++);
@@ -353,26 +354,26 @@ pub fn tty_write(channel: usize, buf: &[u8], mut nr: usize) -> isize {
     let mut c: u8;
     let b: &[u8] = buf;
     let mut b_idx: usize = 0;
-    if (channel>2) {
+    if channel>2 {
         return -1;
     }
-    let mut tty: &mut tty_struct = unsafe { &mut tty_table[channel] };
-    while (nr > 0) {
+    let mut tty: &mut tty_struct = unsafe { &mut TTY_TABLE[channel] };
+    while nr > 0 {
         sleep_if_full(&tty.write_q);
-        while (nr>0 && !FULL(&tty.write_q)) {
+        while nr>0 && !FULL(&tty.write_q) {
             c = get_fs_byte(&b[b_idx] as *const u8);
-            if (O_POST(tty) != 0) {
-                if (c == '\r' as u8 && O_CRNL(tty) != 0) {
+            if o_post(tty) != 0 {
+                if c == '\r' as u8 && o_crnl(tty) != 0 {
                     c = '\n' as u8;
-                } else if (c == '\n' as u8 && O_NLRET(tty) != 0) {
+                } else if c == '\n' as u8 && o_nlret(tty) != 0 {
                     c = '\r' as u8;
                 }
-                if (c == '\n' as u8 && !cr_flag && O_NLCR(tty) != 0) {
+                if c == '\n' as u8 && !cr_flag && o_nlcr(tty) != 0 {
                     cr_flag = true;
                     PUTCH(13, &mut tty.write_q);
                     continue;
                 }
-                if (O_LCUC(tty) != 0) {
+                if o_lcuc(tty) != 0 {
                     c = toupper(c);
                 }
             }
@@ -381,7 +382,7 @@ pub fn tty_write(channel: usize, buf: &[u8], mut nr: usize) -> isize {
             PUTCH(c, &mut tty.write_q);
         }
         (tty.write)(tty);
-        if (nr > 0) {
+        if nr > 0 {
             // schedule();
         }
     }
@@ -389,7 +390,7 @@ pub fn tty_write(channel: usize, buf: &[u8], mut nr: usize) -> isize {
 }
 
 fn do_tty_interrupt(tty: usize) {
-    unsafe { copy_to_cooked(&mut tty_table[tty]); }
+    unsafe { copy_to_cooked(&mut TTY_TABLE[tty]); }
 }
 
 fn chr_dev_init() {

@@ -1,3 +1,4 @@
+#![allow(dead_code, unused_variables)]
 /*
 use include::signal::*;
 use include::asm::system::*;
@@ -19,9 +20,9 @@ unsafe fn invalidate() {
 }
 
 const LOW_MEM: usize = 0x100000;
-const PAGING_MEMORY: usize = (15*1024*1024);
-const PAGING_PAGES: usize = (PAGING_MEMORY>>12);
-#[inline] fn MAP_NR(addr: usize) -> usize { (addr-LOW_MEM) >> 12 }
+const PAGING_MEMORY: usize = 15*1024*1024;
+const PAGING_PAGES: usize = PAGING_MEMORY>>12;
+#[inline] fn map_nr(addr: usize) -> usize { (addr-LOW_MEM) >> 12 }
 const USED: u8 = 100;
 
 static mut HIGH_MEMORY: usize = 0;
@@ -43,7 +44,7 @@ pub fn mem_init(start_mem: usize, end_mem: usize)
             MEM_MAP[i] = USED;
         }
         /*
-        let mut i = MAP_NR(start_mem);
+        let mut i = map_nr(start_mem);
         let mut end_mem = (end_mem - start_mem) >> 12;
         while end_mem > 0 {
             end_mem -= 1;

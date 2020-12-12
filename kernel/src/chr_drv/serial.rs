@@ -3,7 +3,7 @@ use core::mem::transmute;
 use include::asm::io::*;
 use include::asm::system::*;
 use include::linux::tty::*;
-use crate::chr_drv::tty_io::tty_table;
+use crate::chr_drv::tty_io::TTY_TABLE;
 
 extern "C" {
     fn rs1_interrupt();
@@ -24,8 +24,8 @@ pub fn rs_init() {
     unsafe {
         set_intr_gate(0x24, transmute(&rs1_interrupt));
         set_intr_gate(0x23, transmute(&rs2_interrupt));
-        init(tty_table[1].read_q.data as u16);
-        init(tty_table[2].read_q.data as u16);
+        init(TTY_TABLE[1].read_q.data as u16);
+        init(TTY_TABLE[2].read_q.data as u16);
         outb(inb_p(0x21)&0xE7,0x21);
     }
 }
@@ -40,7 +40,7 @@ pub fn rs_init() {
 pub fn rs_write(tty: &mut tty_struct) {
     unsafe {
         cli();
-        if (!EMPTY(&tty.write_q)) {
+        if !EMPTY(&tty.write_q) {
             outb(inb_p(tty.write_q.data as u16+1)|0x02,tty.write_q.data as u16+1);
         }
         sti();

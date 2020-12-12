@@ -1,4 +1,4 @@
-use core::mem::transmute;
+// use core::mem::transmute;
 use include::asm::io::*;
 use include::asm::system::*;
 use include::linux::sched::*;
@@ -26,7 +26,7 @@ pub static mut STACK_START: Stack = Stack {
     b: 0x10,
 };
 
-const LATCH: usize = (1193180/HZ);
+const LATCH: usize = 1193180/HZ;
 
 #[no_mangle]
 fn schedule() {
@@ -58,9 +58,11 @@ pub fn sched_init() {
         outb_p(0x36, 0x43);		/* binary, mode 3, LSB/MSB, ch 0 */
         outb_p((LATCH & 0xff) as u8, 0x40);	/* LSB */
         outb((LATCH >> 8) as u8, 0x40);	/* MSB */
-        set_intr_gate(0x20,transmute(&timer_interrupt));
+        // set_intr_gate(0x20,transmute(&timer_interrupt));
+        set_intr_gate(0x20, &timer_interrupt as *const _ as usize);
         outb(inb_p(0x21)&!0x01, 0x21);
-        set_system_gate(0x80,transmute(&system_call));
+        // set_system_gate(0x80,transmute(&system_call));
+        set_system_gate(0x80, &system_call as *const _ as usize);
     }
 }
 

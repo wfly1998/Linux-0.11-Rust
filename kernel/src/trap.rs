@@ -1,4 +1,5 @@
-use core::mem::transmute;
+#![allow(dead_code, unused_variables)]
+
 use core::slice::from_raw_parts;
 
 use include::asm::io::*;
@@ -139,7 +140,7 @@ fn do_coprocessor_segment_overrun(esp: usize, error_code: usize) {
 }
 
 #[no_mangle]
-fn do_invalid_TSS(esp: usize, error_code: usize) {
+fn do_invalid_tss(esp: usize, error_code: usize) {
     die("invalid TSS", esp, error_code);
 }
 
@@ -168,6 +169,7 @@ fn do_reserved(esp: usize, error_code: usize) {
 
 pub fn trap_init() {
     unsafe {
+        /*
         set_trap_gate(0, transmute(&divide_error));
         set_trap_gate(1, transmute(&debug));
         set_trap_gate(2, transmute(&nmi));
@@ -192,6 +194,31 @@ pub fn trap_init() {
         outb_p(inb_p(0x21)&0xfb, 0x21);
         outb(inb_p(0xA1)&0xdf, 0xA1);
         set_trap_gate(39, transmute(&parallel_interrupt));
+        */
+        set_trap_gate(0, &divide_error as *const _ as usize);
+        set_trap_gate(1, &debug as *const _ as usize);
+        set_trap_gate(2, &nmi as *const _ as usize);
+        set_system_gate(3, &int3 as *const _ as usize);    /* int3-5 can be called from all */
+        set_system_gate(4, &overflow as *const _ as usize);
+        set_system_gate(5, &bounds as *const _ as usize);
+        set_trap_gate(6, &invalid_op as *const _ as usize);
+        set_trap_gate(7, &device_not_available as *const _ as usize);
+        set_trap_gate(8, &double_fault as *const _ as usize);
+        set_trap_gate(9, &coprocessor_segment_overrun as *const _ as usize);
+        set_trap_gate(10, &invalid_TSS as *const _ as usize);
+        set_trap_gate(11, &segment_not_present as *const _ as usize);
+        set_trap_gate(12, &stack_segment as *const _ as usize);
+        set_trap_gate(13, &general_protection as *const _ as usize);
+        set_trap_gate(14, &page_fault as *const _ as usize);
+        set_trap_gate(15, &reserved as *const _ as usize);
+        set_trap_gate(16, &coprocessor_error as *const _ as usize);
+        for i in 17..48 {
+            set_trap_gate(i, &reserved as *const _ as usize);
+        }
+        set_trap_gate(45, &irq13 as *const _ as usize);
+        outb_p(inb_p(0x21)&0xfb, 0x21);
+        outb(inb_p(0xA1)&0xdf, 0xA1);
+        set_trap_gate(39, &parallel_interrupt as *const _ as usize);
     }
 }
 

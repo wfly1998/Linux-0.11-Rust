@@ -129,7 +129,7 @@ error_code:
 	iret
 
 invalid_TSS:
-	pushl $do_invalid_TSS
+	pushl $do_invalid_tss
 	jmp error_code
 
 segment_not_present:

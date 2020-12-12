@@ -8,7 +8,7 @@ fn print(p: usize) -> isize {    // p: *const char
     loop {
         let ptr = (p + i) as *const u8;
         let v = unsafe { *ptr };
-        if (v == 0) {
+        if v == 0 {
             break;
         }
         i += 1;
